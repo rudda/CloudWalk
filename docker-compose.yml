@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+
+  run_algorithim:
+    image: python
+    restart: always
+    volumes:
+      - ./src/:/usr/src/app/
+    environment:
+      - PYTHONPATH=/usr/src/app
+    entrypoint: python /usr/src/app/main.py
+    
+    
