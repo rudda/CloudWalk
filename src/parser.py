@@ -1,7 +1,7 @@
 
-from os import kill
+from util import deaths_type
 import re
-
+import os
 
 PATTERN_NEW_GAME = r'([0-9]*):([0-9]*)\sInitGame:'
 PATTERN_SHUTDOWNGAME_GAME = r'([0-9]*):([0-9]*)\sShutdownGame:'
@@ -12,8 +12,9 @@ KILL_TYPE_BYPLAYER = r'([0-9]*):([0-9]*)\sKill:\s(\d*)\s(\d*)\s(\d*):\s'
     
 class Parser:
     
-    def __init__(self, log_file_path=''):
-        self.log_file_path = log_file_path
+    def __init__(self, rel_path=''):
+        script_dir = os.path.dirname(__file__) 
+        self.log_file_path = os.path.join(script_dir, rel_path)
         self.result = {}
         self.sorted_result = {}
           
@@ -41,15 +42,19 @@ class Parser:
             
         return killers
     
+    def __getPlayer(self, line):
+        keyword = "killed"
+        split_word = "by"
+        start = (line.index(keyword) + len(keyword))
+        player = line[start:].split(split_word)[0].strip()
+        return player
+                   
     def showResults(self):
         self.sorted_result = {}
         for key in sorted (self.result.keys()) :
             value = self.result[key]
             self.sorted_result[key] = value
             print(key, self.sorted_result[key])
-            if self.sorted_result[key]['total_kills'] == 45:
-                exit(0)
-        
             
     def run(self):
         
@@ -91,13 +96,9 @@ class Parser:
               match_kill_type_by_player = re.findall(KILL_TYPE_BYPLAYER, str(line))
               
               if match_kill_type_world:
-                  # TODO move to function
+                  
                   total_kills+= 1
-                  keyword = "killed"
-                  split_word = "by"
-                  start = (line.index(keyword) + len(keyword))
-                  player = line[start:].split(split_word)[0].strip()
-                   #end todo
+                  player = self.__getPlayer(line)
                    
                   if player in unic_players.keys():
                       unic_players[player] = unic_players[player] + 1
@@ -106,17 +107,11 @@ class Parser:
               
               elif match_kill_type_by_player:
                   
-                  new_line = re.sub(KILL_TYPE_BYPLAYER, '', line)
-                  
-                  # todo move it to function
                   total_kills+= 1
+                  new_line = re.sub(KILL_TYPE_BYPLAYER, '', line) 
                   keyword = "killed"
-                  split_word = "by"
-                  start = (line.index(keyword) + len(keyword))
-                  
-                  player = line[start:].split(split_word)[0].strip()
                   killer = new_line.split(keyword)[0].strip()
-                  #end todo
+                  player = self.__getPlayer(line)
                   
                   if player in unic_players.keys():
                       unic_players[player] = unic_players[player] + 1
@@ -125,7 +120,3 @@ class Parser:
 
                   if (killer in unic_killers.keys()) == False:
                       unic_killers[killer] = 0
-                   
-                        
-               
-    
